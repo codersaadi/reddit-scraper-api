@@ -63,7 +63,7 @@ class OutputFormat(str, Enum):
 
 # Pydantic models for request validation
 class ScrapeRequest(BaseModel):
-    subreddit: str = Field(..., description="Name of the subreddit to scrape")
+    subreddit: str = Field(..., min_length=1,description="Name of the subreddit to scrape")
     post_limit: int = Field(25, ge=1, le=100, description="Maximum number of posts to scrape")
     output_format: OutputFormat = Field(OutputFormat.json, description="Format to save data")
     include_comments: bool = Field(False, description="Whether to scrape comments")
@@ -200,7 +200,7 @@ async def get_all_tasks():
     return [TaskStatus(**{k: v for k, v in task.items() if k != "parameters" and k != "analytics"}) 
             for task in task_store.values()]
 
-@app.get("/tasks/{task_id}", response_model=Union[TaskStatus, Dict[str, Any]])
+@app.get("/tasks/{task_id}")
 async def get_task_status(
     task_id: str = Path(..., description="The ID of the task to check"),
     include_analytics: bool = Query(False, description="Include analytics in the response")
@@ -213,12 +213,25 @@ async def get_task_status(
     if task_id not in task_store:
         raise HTTPException(status_code=404, detail="Task not found")
     
+    # Get the full task data
     task = task_store[task_id]
     
-    if include_analytics and task.get("status") == "completed" and "analytics" in task:
+    # Log the task data to help with debugging
+    logger.info(f"Task data for {task_id}: {task}")
+    
+    # Return the complete task data when analytics are requested
+    if include_analytics:
+        # Force analytics to be included if not present
+        if "analytics" not in task and task.get("status") == "completed":
+            task["analytics"] = {
+                "execution_time": "N/A",
+                "posts_per_second": "N/A",
+                "total_posts": task.get("post_count", 0)
+            }
         return task
     else:
-        return TaskStatus(**{k: v for k, v in task.items() if k != "parameters" and k != "analytics"})
+        # Filter out parameters and analytics for normal responses
+        return {k: v for k, v in task.items() if k != "parameters" and k != "analytics"}
 
 @app.get("/download/{task_id}")
 async def download_result(task_id: str = Path(..., description="The ID of the task to download")):
