@@ -409,57 +409,48 @@ class EnhancedRedditScraper:
         return flattened
     
     def generate_analytics(self, posts):
-        """
-        Generate analytics for the scraped data.
+     if not posts:
+        return {}
         
-        Args:
-            posts (list): List of post dictionaries
+     try:
+        # Convert to pandas DataFrame for easier analysis
+        df = pd.DataFrame(posts)
+        
+        # Convert score to numeric
+        df['score_num'] = pd.to_numeric(df['score'], errors='coerce')
+        
+        # Basic statistics
+        analytics = {
+            'total_posts': int(len(posts)),
+            'unique_authors': int(df['author'].nunique()),
+            'average_score': float(df['score_num'].mean()),
+            'median_score': float(df['score_num'].median()),
+            'max_score': float(df['score_num'].max()),
+            'min_score': float(df['score_num'].min()),
+            'stickied_posts': int(df['is_stickied'].sum()) if 'is_stickied' in df else 0,
+            'self_posts_percentage': float(df['is_self_post'].sum() / len(df) * 100) if 'is_self_post' in df else 0,
+            'posts_with_media_percentage': float(df['has_media'].sum() / len(df) * 100) if 'has_media' in df else 0,
+            'top_authors': {k: int(v) for k, v in df['author'].value_counts().head(5).to_dict().items()},
+            'flair_distribution': {k: int(v) for k, v in df['flair'].value_counts().head(10).to_dict().items()} if 'flair' in df else {},
+        }
+        
+        # Save analytics to file
+        output_dir = "output"
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
             
-        Returns:
-            dict: Analytics data
-        """
-        if not posts:
-            return {}
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        analytics_path = os.path.join(output_dir, f"{self.subreddit}_analytics_{timestamp}.json")
+        
+        with open(analytics_path, 'w', encoding='utf-8') as f:
+            json.dump(analytics, f, indent=4)
             
-        try:
-            # Convert to pandas DataFrame for easier analysis
-            df = pd.DataFrame(posts)
-            
-            # Convert score to numeric
-            df['score_num'] = pd.to_numeric(df['score'], errors='coerce')
-            
-            # Basic statistics
-            analytics = {
-                'total_posts': len(posts),
-                'unique_authors': df['author'].nunique(),
-                'average_score': df['score_num'].mean(),
-                'median_score': df['score_num'].median(),
-                'max_score': df['score_num'].max(),
-                'min_score': df['score_num'].min(),
-                'stickied_posts': df['is_stickied'].sum() if 'is_stickied' in df else 0,
-                'self_posts_percentage': (df['is_self_post'].sum() / len(df) * 100) if 'is_self_post' in df else 0,
-                'posts_with_media_percentage': (df['has_media'].sum() / len(df) * 100) if 'has_media' in df else 0,
-                'top_authors': df['author'].value_counts().head(5).to_dict(),
-                'flair_distribution': df['flair'].value_counts().head(10).to_dict() if 'flair' in df else {},
-            }
-            
-            # Save analytics to file
-            output_dir = "output"
-            if not os.path.exists(output_dir):
-                os.makedirs(output_dir)
-                
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            analytics_path = os.path.join(output_dir, f"{self.subreddit}_analytics_{timestamp}.json")
-            
-            with open(analytics_path, 'w', encoding='utf-8') as f:
-                json.dump(analytics, f, indent=4)
-                
-            self.logger.info(f"Analytics saved to {analytics_path}")
-            return analytics
-            
-        except Exception as e:
-            self.logger.error(f"Error generating analytics: {e}")
-            return {}
+        self.logger.info(f"Analytics saved to {analytics_path}")
+        return analytics
+        
+     except Exception as e:
+        self.logger.error(f"Error generating analytics: {e}")
+        return {}
     
     def scrape(self):
         """
