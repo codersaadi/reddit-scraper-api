@@ -1,0 +1,5 @@
+2025-03-19 21:01:08,492 - ERROR - Error in scrape_website: 429 Client Error: Too Many Requests for url: https://www.realtor.com/realestateandhomes-search/austin-tx
+2025-03-19 21:01:34,091 - ERROR - Error in scrape_website: 429 Client Error: Too Many Requests for url: https://www.realtor.com/realestateandhomes-search/london
+2025-03-19 21:01:40,955 - ERROR - Error in scrape_website: 400 Client Error: Bad Request for url: https://www.rightmove.co.uk/property-for-sale/find.html?locationIdentifier=REGION%5Blondon%5D
+2025-03-19 21:03:09,601 - ERROR - Error in scrape_website: 429 Client Error: Too Many Requests for url: https://www.realtor.com/realestateandhomes-search/austin-tx
+2025-03-19 21:03:32,138 - ERROR - Error in scrape_website: 429 Client Error: Too Many Requests for url: https://www.realtor.com/realestateandhomes-search/austin-tx
