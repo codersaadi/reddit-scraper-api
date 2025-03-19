@@ -10,7 +10,8 @@ env/
 ENV/
 env.bak/
 venv.bak/
-
+logs
+output
 # IDE-specific files
 .vscode/
 .idea/
